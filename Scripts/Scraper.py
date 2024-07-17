@@ -151,7 +151,7 @@ def find_name(title):
 
 def tokenize(text, name):
         name = name.replace(' ', '')
-        filePath = "/home/vinkemnt/Downloads/AIspecialisterna/AIspecialisterna/Dumps/" + name + ".json"
+        filePath = file_path + name + ".json"
         tokenizer = nltk.data.load('tokenizers/punkt/PY3/english.pickle')
         sentences = sent_tokenize(text)
         # Output the sentences
