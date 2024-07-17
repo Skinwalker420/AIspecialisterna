@@ -66,11 +66,12 @@ def get_urls_from_directory(base_url, disallowed_paths, delay=1):
     return urls
 
 # Usage
-base_url = "https://www.skatteverket.se/privat/folkbokforing/"
-robots_txt = fetch_robots_txt()
-if robots_txt:
-    disallowed_paths = parse_robots_txt(robots_txt)
-    urls = get_urls_from_directory(base_url, disallowed_paths, delay=1)
+def __init__():
+    base_url = "https://www.skatteverket.se/privat/folkbokforing/"
+    robots_txt = fetch_robots_txt()
+    if robots_txt:
+        disallowed_paths = parse_robots_txt(robots_txt)
+        urls = get_urls_from_directory(base_url, disallowed_paths, delay=1)
 
-    for url in urls:
-        print(url)
+        for url in urls:
+            print(url)

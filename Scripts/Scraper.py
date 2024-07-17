@@ -6,6 +6,9 @@ from nltk.tokenize import sent_tokenize
 import nltk.data
 import json
 import time
+import re
+
+visited_urls = set()
 
 def fetch_robots_txt():
     robots_url = "https://www.skatteverket.se/robots.txt"
@@ -33,7 +36,7 @@ def parse_robots_txt(robots_txt):
 
     return disallowed_paths
 
-def is_url_allowed(url, base_url, disallowed_paths):
+def is_url_allowed(url, disallowed_paths):
     parsed_url = urlparse(url)
     path = parsed_url.path
     for disallowed_path in disallowed_paths:
@@ -41,9 +44,9 @@ def is_url_allowed(url, base_url, disallowed_paths):
             return False
     return True
 
-def get_urls_from_directory(base_url, disallowed_paths, delay=1):
+def get_urls_from_directory(url, disallowed_paths, delay=1):
     try:
-        response = requests.get(base_url)
+        response = requests.get(url)
         response.raise_for_status()  # Check for HTTP errors
     except requests.RequestException as e:
         print(f"Error fetching the URL: {e}")
@@ -60,26 +63,40 @@ def get_urls_from_directory(base_url, disallowed_paths, delay=1):
     for tag in anchor_tags:
         href = tag.get('href')
         if href:
-            full_url = urljoin(base_url, href)  # Construct the full URL
-            if full_url.startswith(base_url) and is_url_allowed(full_url, base_url, disallowed_paths):
+            full_url = urljoin(url, href) # Construct the full URL
+            if full_url.startswith(base_url) and is_url_allowed(full_url, disallowed_paths) and full_url not in visited_urls and '#' not in full_url:
+                visited_urls.add(full_url)
                 urls.append(full_url)
-
+                print(full_url)
+                print('visited pages: ' + str(len(visited_urls)))
     # Introduce delay
     time.sleep(delay)
-    for url in urls:
-        print(url)
     return urls
 
+def crawl(url, disallowed_paths):
+    try:
+        links = get_urls_from_directory(url, disallowed_paths)
+        for link in links:
+            crawl(link, disallowed_paths)
+    except Exception as e:
+        print("sämst")
+        print(e)
+
+        
 # Usage
 def __init__():
     print("input website: ")
+    global file_path
+    global base_url
     base_url = input()
+    print("file path: ")
+    file_path = input()
     robots_txt = fetch_robots_txt()
     if robots_txt:
         disallowed_paths = parse_robots_txt(robots_txt)
-        urls = get_urls_from_directory(base_url, disallowed_paths, delay=1)
+        crawl(base_url, disallowed_paths)
 
-        for url in urls:
+        for url in visited_urls:
             scrape_page(url)
 
 
@@ -93,13 +110,22 @@ def scrape_page(url):
         if response.status_code == 200:
             # Parse HTML using BeautifulSoup
             soup = BeautifulSoup(response.content, 'html.parser')
+            elements = soup.find_all('p')
+            title = soup.find('title')
+            
+            name = find_name(title)
 
             # Extract text content
-            text_content = soup.get_text()
+            text_content = []
 
-            # Save text content to a file
+            for element in elements:
+                if element.find('a'):
+                    continue
+                text_content.append(element.get_text(strip = True))
+            text_content = text_content[:-2]
+            full_text = ' '.join(text_content)
             
-            clean(text_content)
+            tokenize(full_text, name)
         else:
             print(f'Error fetching URL: Status code {response.status_code}')
 
@@ -111,38 +137,17 @@ def scrape_page(url):
         # Handle other exceptions
         print(f'Error: {e}')
 
-def find_name(text):
+def find_name(title):
     name = ""
-    lines = [line for line in text.splitlines() if line.strip()]
-    for i in lines[0]:
+    title = BeautifulSoup.get_text(title)
+    for i in title:
         if(i == "|"):
             name = name[:-1]
             break
         name += i
+    name = name.replace('/', '-')
     print(name)
     return name
-
-def clean(text):
-    listeningFound = False
-    kontaktFound = False
-    nameFound = False
-    name = find_name(text)
-    lines = [line for line in text.splitlines() if line.strip()]
-    textlength = len(lines)
-    for i in range(textlength):
-        if(lines[i] == "Lyssna"):
-            lines[i] = ""
-            listeningFound = True
-        if(lines[i] == "Kontakta oss" and listeningFound):
-            kontaktFound = True
-        elif(listeningFound and lines[i] == name):
-            nameFound = True
-        if(not nameFound or kontaktFound):
-            lines[i] = ""
-    lines = [line for line in lines if line.strip()]
-    separator = " "
-    results = separator.join(lines)
-    tokenize(results, name)
 
 def tokenize(text, name):
         name = name.replace(' ', '')
@@ -158,5 +163,6 @@ def tokenize(text, name):
                         break
             except:
                 os.mkdir(filePath)
+
 
 __init__()
