@@ -4,11 +4,15 @@ from urllib.parse import urljoin, urlparse
 import os
 from nltk.tokenize import sent_tokenize
 import nltk.data
+import nltk
 import json
 import time
 import re
 
 visited_urls = set()
+
+def exitPrompt():
+    input('Press ENTER to exit')
 
 def fetch_robots_txt():
     robots_url = "https://www.skatteverket.se/robots.txt"
@@ -53,7 +57,7 @@ def get_urls_from_directory(url, disallowed_paths, delay=1):
         return []
 
     # Parse the HTML content
-    soup = BeautifulSoup(response.text, 'lxml')
+    soup = BeautifulSoup(response.text, "html.parser")
 
     # Find all anchor tags
     anchor_tags = soup.find_all('a')
@@ -79,8 +83,8 @@ def crawl(url, disallowed_paths):
         for link in links:
             crawl(link, disallowed_paths)
     except Exception as e:
-        print("sämst")
         print(e)
+        exitPrompt()
 
         
 # Usage
@@ -132,10 +136,12 @@ def scrape_page(url):
     except requests.RequestException as e:
         # Handle request exceptions (e.g., connection errors)
         print(f'Error fetching URL: {e}')
+        exitPrompt()
 
     except Exception as e:
         # Handle other exceptions
         print(f'Error: {e}')
+        exitPrompt()
 
 def find_name(title):
     name = ""
@@ -150,19 +156,19 @@ def find_name(title):
     return name
 
 def tokenize(text, name):
-        name = name.replace(' ', '')
-        filePath = file_path + name + ".json"
-        tokenizer = nltk.data.load('tokenizers/punkt/PY3/english.pickle')
-        sentences = sent_tokenize(text)
-        # Output the sentences
-        while(True):
-            try:
-                with open(filePath, 'w') as json_file:
-                        json.dump(sentences, json_file, indent=4)
-                        print(f"Data successfully saved to {filePath}")
-                        break
-            except:
-                os.mkdir(filePath)
-
+    name = name.replace(' ', '')
+    filePath = file_path + name + ".json"
+    tokenizer = nltk.data.load('tokenizers/punkt/PY3/english.pickle')
+    sentences = sent_tokenize(text)
+    # Output the sentences
+    while(True):
+        try:
+            with open(filePath, 'w') as json_file:
+                    json.dump(sentences, json_file, indent=4)
+                    print(f"Data successfully saved to {filePath}")
+                    break
+        except:
+            os.mkdir(filePath)
 
 __init__()
+
