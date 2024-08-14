@@ -88,16 +88,30 @@ def __init__():
     print("input website: ")
     global file_path
     global base_url
+    global full_file
+    full_file = []
     base_url = input()
     print("file path: ")
     file_path = input()
+    print("file name: ")
+    name = input()
     robots_txt = fetch_robots_txt()
+    file_path = file_path + '/' + name + ".json"
     if robots_txt:
         disallowed_paths = parse_robots_txt(robots_txt)
         crawl(base_url, disallowed_paths)
 
         for url in visited_urls:
             scrape_page(url)
+
+    while(True):
+            try:
+                with open(file_path, 'w') as json_file:
+                        json.dump(full_file, json_file, indent=4)
+                        print(f"Data successfully saved to {file_path}")
+                        break
+            except:
+                os.mkdir(file_path)
 
 
 # Function to scrape a single page
@@ -125,7 +139,7 @@ def scrape_page(url):
             text_content = text_content[:-2]
             full_text = ' '.join(text_content)
             
-            tokenize(full_text, name)
+            tokenize(full_text, name, url)
         else:
             print(f'Error fetching URL: Status code {response.status_code}')
 
@@ -146,23 +160,26 @@ def find_name(title):
             break
         name += i
     name = name.replace('/', '-')
+    name = name.replace(':', "-")
     print(name)
     return name
 
-def tokenize(text, name):
+def tokenize(text, name, url):
         name = name.replace(' ', '')
-        filePath = file_path + name + ".json"
         tokenizer = nltk.data.load('tokenizers/punkt/PY3/english.pickle')
         sentences = sent_tokenize(text)
         # Output the sentences
-        while(True):
-            try:
-                with open(filePath, 'w') as json_file:
-                        json.dump(sentences, json_file, indent=4)
-                        print(f"Data successfully saved to {filePath}")
-                        break
-            except:
-                os.mkdir(filePath)
+        full_file.append(url)
+        full_file.append(sentences)
+
+        # while(True):
+        #     try:
+        #         with open(filePath, 'w') as json_file:
+        #                 json.dump(sentences, json_file, indent=4)
+        #                 print(f"Data successfully saved to {filePath}")
+        #                 break
+        #     except:
+        #         os.mkdir(filePath)
 
 
 __init__()
