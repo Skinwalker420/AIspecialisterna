@@ -81,10 +81,10 @@ def crawl(url, disallowed_paths):
     try:
         links = get_urls_from_directory(url, disallowed_paths)
         for link in links:
+            print(link)
             crawl(link, disallowed_paths)
     except Exception as e:
         print(e)
-        exitPrompt()
 
         
 # Usage
@@ -116,6 +116,8 @@ def __init__():
                         break
             except:
                 os.mkdir(file_path)
+    print("finished. Press enter to exit")
+    input()
 
 
 # Function to scrape a single page
@@ -127,7 +129,7 @@ def scrape_page(url):
         # Check if request was successful (status code 200)
         if response.status_code == 200:
             # Parse HTML using BeautifulSoup
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "lxml")
             elements = soup.find_all('p')
             title = soup.find('title')
             
@@ -150,12 +152,10 @@ def scrape_page(url):
     except requests.RequestException as e:
         # Handle request exceptions (e.g., connection errors)
         print(f'Error fetching URL: {e}')
-        exitPrompt()
 
     except Exception as e:
         # Handle other exceptions
         print(f'Error: {e}')
-        exitPrompt()
 
 def find_name(title):
     name = ""
